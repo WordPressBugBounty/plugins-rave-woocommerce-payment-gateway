@@ -532,10 +532,38 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			$the_order_key = $order->get_order_key();
 			$currency      = $order->get_currency();
 			$custom_nonce  = wp_create_nonce();
-			$redirect_url  = WC()->api_request_url( 'FLW_WC_Payment_Gateway' ) . '?order_id=' . $order_id . '&_wpnonce=' . $custom_nonce;
+			$redirect_url  = '';
+
+			$flutterwave_woo_url = WC()->api_request_url( 'FLW_WC_Payment_Gateway' );
+
+			// Parse the base URL to check for existing query parameters.
+			$url_parts = wp_parse_url( $flutterwave_woo_url );
+
+			// If the base URL already has query parameters, merge them with new ones.
+			if ( isset( $url_parts['query'] ) ) {
+				// Convert the query string to an array.
+				parse_str( $url_parts['query'], $query_array );
+
+				// Add the new parameters to the existing query array.
+				$query_array['order_id'] = $order_id;
+
+				// Rebuild the query string with the new parameters.
+				$new_query_string = http_build_query( $query_array );
+
+				// Rebuild the final URL with the new query string.
+				$redirect_url = $url_parts['scheme'] . '://' . $url_parts['host'] . $url_parts['path'] . '?' . $new_query_string;
+			} else {
+				// If no existing query parameters, simply append the new ones.
+				$redirect_url = add_query_arg(
+					array(
+						'order_id' => $order_id,
+						'_wpnonce' => $custom_nonce,
+					),
+					$flutterwave_woo_url
+				);
+			}
 
 			if ( $the_order_id === $order_id && $the_order_key === $order_key ) {
-
 				$payment_args['email']           = $email;
 				$payment_args['amount']          = $amount;
 				$payment_args['tx_ref']          = $txnref;
@@ -560,7 +588,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 	}
 
 	/**
-	 * Verify payment made on the checkout page
+	 * Verify payment made on the checkout page.
 	 *
 	 * @return void
 	 */
@@ -599,7 +627,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 	}
 
 	/**
-	 * Process Webhook
+	 * Process Webhook.
 	 */
 	public function flutterwave_webhooks() {
 		$public_key     = $this->public_key;
@@ -680,6 +708,18 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			$o        = explode( '_', $txn_ref );
 			$order_id = intval( $o[1] );
 			$order    = wc_get_order( $order_id );
+
+			if ( ! $order ) {
+				wp_send_json(
+					array(
+						'status'  => 'error',
+						'message' => 'Invalid Reference',
+						'reason'  => 'Order does not belong to store',
+					),
+					WP_Http::BAD_REQUEST
+				);
+			}
+
 			// get order status.
 			$current_order_status = $order->get_status();
 

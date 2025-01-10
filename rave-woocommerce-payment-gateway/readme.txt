@@ -2,8 +2,8 @@
 Contributors: theflutterwave
 Tags: fintech,flutterwave, woocommerce, payments, nigeria, mastercard, visa, target,Naira,payments,verve,donation,church,shop,store, ghana, kenya, international, mastercard, visa
 Requires at least: 3.1
-Tested up to: 6.4.2
-Stable tag: 2.3.5
+Tested up to: 6.7.1
+Stable tag: 2.3.6
 License: MIT
 License URI: https://github.com/Flutterwave/Woocommerce/blob/master/LICENSE
 
@@ -96,6 +96,9 @@ By contributing to the Flutterwave WooCommerce, you agree that your contribution
 1. You need to open an account on [Flutterwave for Business](https://dashboard.flutterwave.com)
 
 == Changelog ==
+= 2.3.6 =
+* Fixed: Dynamic Adjustment to Custom Permalink Set by Merchant.
+* Fixed: Redirect Payment option return a Payment Mismatch Error.
 = 2.3.5 =
 * Added: Support for HPOS.
 * Fixed: compatibility with WooCommerce 7.1 to 6.9.1

@@ -18,7 +18,7 @@ final class Flutterwave {
 	 *
 	 * @var string
 	 */
-	public string $version = '2.3.5';
+	public string $version = '2.3.6';
 
 	/**
 	 * Plugin API version.
@@ -26,6 +26,7 @@ final class Flutterwave {
 	 * @var string
 	 */
 	public string $api_version = 'v3';
+
 	/**
 	 * Plugin instance.
 	 *
@@ -119,7 +120,6 @@ final class Flutterwave {
 		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
 
 		$this->register_payment_gateway();
-
 	}
 
 	/**

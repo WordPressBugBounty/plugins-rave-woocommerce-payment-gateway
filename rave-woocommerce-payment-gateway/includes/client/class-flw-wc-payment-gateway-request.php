@@ -82,7 +82,7 @@ final class FLW_WC_Payment_Gateway_Request {
 	public function get_prepared_payload( \WC_Order $order, string $secret_key, bool $testing = false ): array {
 		$order_id = $order->get_id();
 		$txnref   = 'WOOC_' . $order_id . '_' . time();
-		$amount   = $order->get_total();
+		$amount   = (float) $order->get_total();
 		$currency = $order->get_currency();
 		$email    = $order->get_billing_email();
 
@@ -95,21 +95,48 @@ final class FLW_WC_Payment_Gateway_Request {
 			throw new \InvalidArgumentException( 'This Payment Method is current unavailable as Administrator is yet to Configure it.Please contact Administrator for more information.' );
 		}
 
-		$data_to_hash  = array(
+		$data_to_hash = array(
 			'amount'     => $amount,
 			'currency'   => $currency,
 			'email'      => $email,
 			'tx_ref'     => $txnref,
 			'secret_key' => $secret_key,
 		);
+
 		$checkout_hash = $this->generate_checkout_hash( $data_to_hash );
+
+		// Parse the base URL to check for existing query parameters.
+		$url_parts = wp_parse_url( $this->notify_url );
+
+		// If the base URL already has query parameters, merge them with new ones.
+		if ( isset( $url_parts['query'] ) ) {
+			// Convert the query string to an array.
+			parse_str( $url_parts['query'], $query_array );
+
+			// Add the new parameters to the existing query array.
+			$query_array['order_id'] = $order_id;
+
+			// Rebuild the query string with the new parameters.
+			$new_query_string = http_build_query( $query_array );
+
+			// Rebuild the final URL with the new query string.
+			$callback_url = $url_parts['scheme'] . '://' . $url_parts['host'] . $url_parts['path'] . '?' . $new_query_string;
+		} else {
+			// If no existing query parameters, simply append the new ones.
+			$callback_url = add_query_arg(
+				array(
+					'order_id' => $order_id,
+				),
+				$this->notify_url
+			);
+		}
 
 		return array(
 			'amount'          => $amount,
 			'tx_ref'          => $txnref,
 			'currency'        => $currency,
 			'payment_options' => 'card',
-			'redirect_url'    => $this->notify_url . '?order_id=' . $order_id,
+			'redirect_url'    => $callback_url,
 			'payload_hash'    => $checkout_hash,
 			'customer'        => array(
 				'email'        => $email,
