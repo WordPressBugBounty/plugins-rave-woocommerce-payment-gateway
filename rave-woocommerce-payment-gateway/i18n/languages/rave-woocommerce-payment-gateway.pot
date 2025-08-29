@@ -2,22 +2,22 @@
 # This file is distributed under the MIT License.
 msgid ""
 msgstr ""
-"Project-Id-Version: Flutterwave WooCommerce 2.3.6\n"
+"Project-Id-Version: Flutterwave WooCommerce 3.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/rave-woocommerce-payment-gateway\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-01-10T09:07:15+00:00\n"
+"POT-Creation-Date: 2025-08-29T15:34:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.11.0\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: rave-woocommerce-payment-gateway\n"
 
 #. Plugin Name of the plugin
 #. Translators: %s Plugin name.
 #: rave-woocommerce-payment-gateway.php
-#: includes/class-flw-wc-payment-gateway.php:227
+#: includes/class-flw-wc-payment-gateway.php:230
 #: includes/views/html-admin-missing-woocommerce.php:15
 msgid "Flutterwave WooCommerce"
 msgstr ""
@@ -42,28 +42,28 @@ msgstr ""
 msgid "http://flutterwave.com/us"
 msgstr ""
 
-#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:156
+#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:155
 msgid "Visa"
 msgstr ""
 
-#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:160
+#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:159
 msgid "American Express"
 msgstr ""
 
-#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:164
+#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:163
 msgid "Mastercard"
 msgstr ""
 
-#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:171
+#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:170
 msgctxt "Name of credit card"
 msgid "Discover"
 msgstr ""
 
-#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:175
+#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:174
 msgid "JCB"
 msgstr ""
 
-#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:179
+#: includes/blocks/class-flutterwave-wc-gateway-blocks-support.php:178
 msgid "Diners"
 msgstr ""
 
@@ -137,219 +137,222 @@ msgstr ""
 
 #. translators: 1: payment reference 2: transaction reference
 #: includes/class-flw-wc-payment-gateway-subscriptions.php:163
+#, php-format
 msgid "Payment via Flutterwave successful (Payment Reference: %1$s, Transaction Reference: %2$s)"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:152
+#: includes/class-flw-wc-payment-gateway.php:154
 msgid "allows you to accept payment from cards and bank accounts in multiple currencies. You can also accept payment offline via USSD and POS."
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:231
+#: includes/class-flw-wc-payment-gateway.php:234
 msgid "Webhook Instruction"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:235
+#: includes/class-flw-wc-payment-gateway.php:238
 msgid "Please copy this webhook URL and paste on the webhook section on your dashboard"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:256
+#: includes/class-flw-wc-payment-gateway.php:259
 msgid "Enable/Disable"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:257
+#: includes/class-flw-wc-payment-gateway.php:260
 msgid "Enable Flutterwave"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:259
+#: includes/class-flw-wc-payment-gateway.php:262
 msgid "Enable Flutterwave as a payment option on the checkout page"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:264
+#: includes/class-flw-wc-payment-gateway.php:267
 msgid "Enter Secret Hash"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:266
+#: includes/class-flw-wc-payment-gateway.php:269
 msgid "Please change from default hash and ensure that <b>SECRET HASH</b> is the same with the one on your Flutterwave dashboard"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:270
+#: includes/class-flw-wc-payment-gateway.php:273
 msgid "Payment method title"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:272
-#: includes/class-flw-wc-payment-gateway.php:278
+#: includes/class-flw-wc-payment-gateway.php:275
+#: includes/class-flw-wc-payment-gateway.php:281
 msgid "Optional"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:276
+#: includes/class-flw-wc-payment-gateway.php:279
 msgid "Payment method description"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:282
+#: includes/class-flw-wc-payment-gateway.php:285
 msgid "Test Public Key"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:284
+#: includes/class-flw-wc-payment-gateway.php:287
 msgid "Required! Enter your Flutterwave test public key here"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:288
+#: includes/class-flw-wc-payment-gateway.php:291
 msgid "Test Secret Key"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:290
+#: includes/class-flw-wc-payment-gateway.php:293
 msgid "Required! Enter your Flutterwave test secret key here"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:294
+#: includes/class-flw-wc-payment-gateway.php:297
 msgid "Live Public Key"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:296
+#: includes/class-flw-wc-payment-gateway.php:299
 msgid "Required! Enter your Flutterwave live public key here"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:300
+#: includes/class-flw-wc-payment-gateway.php:303
 msgid "Live Secret Key"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:302
+#: includes/class-flw-wc-payment-gateway.php:305
 msgid "Required! Enter your Flutterwave live secret key here"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:306
+#: includes/class-flw-wc-payment-gateway.php:309
 msgid "Payment Style on checkout"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:308
+#: includes/class-flw-wc-payment-gateway.php:311
 msgid "Optional - Choice of payment style to use. Either inline or redirect. (Default: inline)"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:310
+#: includes/class-flw-wc-payment-gateway.php:313
 msgctxt "payment_style"
 msgid "Popup(Keep payment experience on the website)"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:311
+#: includes/class-flw-wc-payment-gateway.php:314
 msgctxt "payment_style"
 msgid "Redirect"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:316
+#: includes/class-flw-wc-payment-gateway.php:319
 msgid "Autocomplete Order After Payment"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:317
+#: includes/class-flw-wc-payment-gateway.php:320
 msgid "Autocomplete Order"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:320
+#: includes/class-flw-wc-payment-gateway.php:323
 msgid "If enabled, the order will be marked as complete after successful payment"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:325
+#: includes/class-flw-wc-payment-gateway.php:328
 msgid "Payment Options"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:327
-msgid "Optional - Choice of payment method to use. Card, Account etc."
-msgstr ""
-
-#: includes/class-flw-wc-payment-gateway.php:329
-msgctxt "payment_options"
-msgid "All"
-msgstr ""
-
 #: includes/class-flw-wc-payment-gateway.php:330
-msgctxt "payment_options"
-msgid "Card Only"
-msgstr ""
-
-#: includes/class-flw-wc-payment-gateway.php:331
-msgctxt "payment_options"
-msgid "Account Only"
+msgid "Optional - Choice of payment method to use. Card, Account etc."
 msgstr ""
 
 #: includes/class-flw-wc-payment-gateway.php:332
 msgctxt "payment_options"
-msgid "USSD Only"
+msgid "All"
 msgstr ""
 
 #: includes/class-flw-wc-payment-gateway.php:333
 msgctxt "payment_options"
-msgid "QR Only"
+msgid "Card Only"
 msgstr ""
 
 #: includes/class-flw-wc-payment-gateway.php:334
 msgctxt "payment_options"
-msgid "Mpesa Only"
+msgid "Account Only"
 msgstr ""
 
 #: includes/class-flw-wc-payment-gateway.php:335
 msgctxt "payment_options"
-msgid "Ghana MM Only"
+msgid "USSD Only"
 msgstr ""
 
 #: includes/class-flw-wc-payment-gateway.php:336
 msgctxt "payment_options"
-msgid "Rwanda MM Only"
+msgid "QR Only"
 msgstr ""
 
 #: includes/class-flw-wc-payment-gateway.php:337
 msgctxt "payment_options"
-msgid "Zambia MM Only"
+msgid "Mpesa Only"
 msgstr ""
 
 #: includes/class-flw-wc-payment-gateway.php:338
 msgctxt "payment_options"
+msgid "Ghana MM Only"
+msgstr ""
+
+#: includes/class-flw-wc-payment-gateway.php:339
+msgctxt "payment_options"
+msgid "Rwanda MM Only"
+msgstr ""
+
+#: includes/class-flw-wc-payment-gateway.php:340
+msgctxt "payment_options"
+msgid "Zambia MM Only"
+msgstr ""
+
+#: includes/class-flw-wc-payment-gateway.php:341
+msgctxt "payment_options"
 msgid "Tanzania MM Only"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:343
+#: includes/class-flw-wc-payment-gateway.php:346
 msgid "Mode"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:344
+#: includes/class-flw-wc-payment-gateway.php:347
 msgid "Live mode"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:346
+#: includes/class-flw-wc-payment-gateway.php:349
 msgid "Check this box if you're using your live keys."
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:351
-#: includes/class-flw-wc-payment-gateway.php:352
+#: includes/class-flw-wc-payment-gateway.php:354
+#: includes/class-flw-wc-payment-gateway.php:355
 msgid "Disable Logging"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:354
+#: includes/class-flw-wc-payment-gateway.php:357
 msgid "Check this box if you're disabling logging."
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:359
-#: includes/class-flw-wc-payment-gateway.php:360
+#: includes/class-flw-wc-payment-gateway.php:362
+#: includes/class-flw-wc-payment-gateway.php:363
 msgid "Disable Barter"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:362
+#: includes/class-flw-wc-payment-gateway.php:365
 msgid "Check the box if you want to disable barter."
 msgstr ""
 
 #. translators: %s: url
-#: includes/class-flw-wc-payment-gateway.php:453
+#: includes/class-flw-wc-payment-gateway.php:456
+#, php-format
 msgid "Flutterwave is enabled, but the API keys are not set. Please <a href=\"%s\">set your Flutterwave API keys</a> to be able to accept payments."
 msgstr ""
 
 #. translators: %s: shop cart url
-#: includes/class-flw-wc-payment-gateway.php:490
+#: includes/class-flw-wc-payment-gateway.php:493
+#, php-format
 msgid "Sorry, your session has expired. <a href=\"%s\" class=\"wc-backward\">Return to shop</a>"
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:504
+#: includes/class-flw-wc-payment-gateway.php:507
 msgid "We were unable to process your order, please try again."
 msgstr ""
 
-#: includes/class-flw-wc-payment-gateway.php:579
+#: includes/class-flw-wc-payment-gateway.php:582
 msgid "Order Payment"
 msgstr ""
 
@@ -359,11 +362,13 @@ msgstr ""
 
 #. translators: $1. Minimum WooCommerce version. $2. Current WooCommerce version.
 #: includes/notices/class-flw-wc-payment-gateway-notices.php:32
+#, php-format
 msgid "Flutterwave WooCommerce requires WooCommerce %1$s or greater to be installed and active. kindly upgrade to a higher version of WooCommerce or downgrade to a lower version of Flutterwave WooCommerce that supports WooCommerce version %2$s."
 msgstr ""
 
 #. Translators: %s Plugin name.
 #: includes/views/html-admin-missing-woocommerce.php:15
+#, php-format
 msgid "%s requires WooCommerce to be installed and activated in order to serve updates."
 msgstr ""
 

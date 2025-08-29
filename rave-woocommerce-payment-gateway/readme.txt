@@ -3,7 +3,7 @@ Contributors: theflutterwave
 Tags: fintech,flutterwave, woocommerce, payments, nigeria, mastercard, visa, target,Naira,payments,verve,donation,church,shop,store, ghana, kenya, international, mastercard, visa
 Requires at least: 3.1
 Tested up to: 6.7.1
-Stable tag: 2.3.6
+Stable tag: 3.1.0
 License: MIT
 License URI: https://github.com/Flutterwave/Woocommerce/blob/master/LICENSE
 
@@ -11,7 +11,7 @@ The WooCommerce Plugin makes it very easy and quick to add Flutterwave Payment o
 
 == Description ==
 
-Accept Credit card, Debit card and Bank account payment directly on your store with the official Flutterwave Plugin for WooCommerce.
+Accept Credit card, Debit card and Bank account payment directly on your store with the official Flutterwave Plugin for WooCommerce. This plugin supports WooCommerce Version 6.9 or greater. For WooCommerce Version 6.8 or lower please install Flutterwave WooCommerce Version (2.3.6 or lower) of the plugin [here](https://wordpress.org/plugins/rave-woocommerce-payment-gateway/advanced/) at the section update advanced options.
 
 = Plugin Features =
 
@@ -22,7 +22,7 @@ Accept Credit card, Debit card and Bank account payment directly on your store w
 = Requirements =
 
 1. Flutterwave for business [API Keys](https://developer.flutterwave.com/docs/integration-guides/authentication)
-2. [WooCommerce](https://woocommerce.com/)
+2. [WooCommerce](https://woocommerce.com/) version: >= 6.9
 6. Supported PHP version: 7.4.0 - 8.1.0
 
 == Installation ==

@@ -22,6 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 defined( 'FLUTTERWAVEACCESS' ) || exit( 'No direct script access allowed' );
 
 require_once __DIR__ . '/class-flw-wc-payment-gateway-client.php';
+require_once __DIR__ . '/../util/class-flutterwave-logger.php';
 
 /**
  * Class FLW_WC_Payment_Gateway_Sdk file.

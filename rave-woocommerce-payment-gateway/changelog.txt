@@ -1,4 +1,7 @@
 == Changelog ==
+= 3.1.0 =
+* Added: Set Minimum Support to WooCommerce 6.9 or greater.
+* Added: Flutterwave Logger instance using wc_logger.
 = 2.3.6 =
 * Fixed: Dynamic Adjustment to Custom Permalink Set by Merchant.
 * Fixed: Redirect Payment option return a Payment Mismatch Error.

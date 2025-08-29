@@ -25,10 +25,12 @@ if ( ! defined( 'FLUTTERWAVEACCESS' ) ) {
 require_once __DIR__ . '/class-flw-wc-payment-gateway-event-handler.php';
 require_once __DIR__ . '/client/class-flw-wc-payment-gateway-request.php';
 require_once __DIR__ . '/client/class-flw-wc-payment-gateway-sdk.php';
+require_once __DIR__ . '/util/class-flutterwave-logger.php';
 
 use Flutterwave\WooCommerce\Client\Flw_WC_Payment_Gateway_Request;
 use Flutterwave\WooCommerce\Client\FLW_WC_Payment_Gateway_Sdk as FlwSdk;
 use FLW_WC_Payment_Gateway_Event_Handler as FlwEventHandler;
+use Flutterwave\WooCommerce\Util\Flutterwave_Logger;
 
 /**
  * Main Flutterwave Gateway Class
@@ -92,9 +94,9 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Logger
 	 *
-	 * @var WC_Logger the logger
+	 * @var Flutterwave_Logger the logger
 	 */
-	private WC_Logger $logger;
+	private Flutterwave_Logger $logger;
 	/**
 	 * Flutterwave Sdk
 	 *
@@ -204,7 +206,8 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			$this->secret_key = $this->live_secret_key;
 		}
 
-		$this->sdk = new FlwSdk( $this->secret_key, self::$log_enabled );
+		$this->logger = Flutterwave_Logger::instance();
+		$this->sdk    = new FlwSdk( $this->secret_key, self::$log_enabled );
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
 
@@ -593,13 +596,11 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 	 * @return void
 	 */
 	public function flw_verify_payment() {
-		$public_key     = $this->public_key;
-		$secret_key     = $this->secret_key;
-		$logging_option = $this->logging_option;
-		$sdk            = $this->sdk;
+		$sdk = $this->sdk;
 
 		if ( ! isset( $_GET['_wpnonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) ) ) {
 			if ( isset( $_GET['status'] ) && 'cancelled' === $_GET['status'] ) {
+				$this->logger->info( 'transaction cancelled by the customer.' );
 				$sdk->set_event_handler( new FlwEventHandler( $order ) )->cancel_payment( $txn_ref );
 				header( 'Location: ' . wc_get_cart_url() );
 				die();
@@ -613,6 +614,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			$order    = wc_get_order( $order_id );
 
 			if ( isset( $_GET['status'] ) && 'cancelled' === $_GET['status'] ) {
+				$this->logger->info( 'transaction cancelled by the customer.' );
 				$sdk->set_event_handler( new FlwEventHandler( $order ) )->cancel_payment( $txn_ref );
 				header( 'Location: ' . wc_get_cart_url() );
 				die();
@@ -630,10 +632,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 	 * Process Webhook.
 	 */
 	public function flutterwave_webhooks() {
-		$public_key     = $this->public_key;
-		$secret_key     = $this->secret_key;
-		$logging_option = $this->logging_option;
-		$sdk            = $this->sdk;
+		$sdk = $this->sdk;
 
 		$event = file_get_contents( 'php://input' );
 
@@ -647,6 +646,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 		$signature = ( sanitize_text_field( wp_unslash( $_SERVER['HTTP_VERIF_HASH'] ) ) ?? '' );
 
 		if ( ! $signature ) {
+			$this->logger->info( 'Faudulent Webhook Notification Attempt [Access Redirected]' );
 			// redirect to the home page.
 			wp_safe_redirect( home_url() );
 			exit();
@@ -655,6 +655,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 		$local_signature = $this->get_option( 'secret_hash' );
 
 		if ( $signature !== $local_signature ) {
+			$this->logger->info( 'Faudulent Webhook Notification Attempt [Access Restricted]' );
 			wp_send_json(
 				array(
 					'status'  => 'error',
@@ -665,6 +666,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 		}
 
 		http_response_code( 200 );
+		$this->logger->info( 'Webhook recieved: ' . $event );
 		$event = json_decode( $event );
 
 		if ( empty( $event->event ) && empty( $event->data ) ) {
@@ -678,6 +680,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( 'test_assess' === $event->event ) {
+			$this->logger->info( 'Flutterwave Webhook Testing Successful.' );
 			wp_send_json(
 				array(
 					'status'  => 'success',
@@ -695,6 +698,7 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 
 			// check if transaction reference starts with WOOC on hpos enabled.
 			if ( substr( $event_data->tx_ref, 0, 4 ) !== 'WOOC' ) {
+				$this->logger->info( 'Attempt to verifiy a transaction not produced by the merchants store.' );
 				wp_send_json(
 					array(
 						'status'  => 'failed',

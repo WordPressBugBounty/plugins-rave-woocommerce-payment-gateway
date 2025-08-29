@@ -50,12 +50,9 @@ final class Flutterwave_WC_Gateway_Blocks_Support extends AbstractPaymentMethodT
 			if ( ! class_exists( 'FLW_WC_Payment_Gateway' ) ) {
 				require_once dirname( FLW_WC_PLUGIN_FILE ) . '/includes/class-flw-wc-payment-gateway.php';
 			}
-
-			$this->gateway = new FLW_WC_Payment_Gateway();
-		} else {
-			$gateways      = WC()->payment_gateways->payment_gateways();
-			$this->gateway = $gateways[ $this->name ];
 		}
+
+		$this->gateway = new FLW_WC_Payment_Gateway();
 	}
 
 	/**
@@ -70,6 +67,8 @@ final class Flutterwave_WC_Gateway_Blocks_Support extends AbstractPaymentMethodT
 			if ( ! isset( $gateways[ $this->name ] ) ) {
 				return false;
 			}
+
+			$this->gateway = $gateways[ $this->name ];
 		}
 
 		return $this->gateway->is_available();
