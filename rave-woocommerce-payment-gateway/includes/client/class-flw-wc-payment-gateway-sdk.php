@@ -88,7 +88,6 @@ final class FLW_WC_Payment_Gateway_Sdk {
 	public function __construct( string $secret_key, bool $log_enabled = false ) {
 		$this->client = new FLW_WC_Payment_Gateway_Client( $secret_key, $log_enabled );
 		$this->logger = wc_get_logger();
-		return $this;
 	}
 
 	/**
@@ -143,7 +142,7 @@ final class FLW_WC_Payment_Gateway_Sdk {
 			'<html lang="en">',
 			'<body>',
 			'   <img src="' . esc_url( plugins_url( 'sdk/ajax-loader.gif', FLW_WC_PLUGIN_FILE ) ) . '" />',
-			'	<script>',
+			'  <script>',
 			'       var isFlutterwaveCompleted = false;',
 			'       document.addEventListener("DOMContentLoaded", function(event) {',
 			'           FlutterwaveCheckout("", function(event) {',
@@ -175,7 +174,7 @@ final class FLW_WC_Payment_Gateway_Sdk {
 			'               },',
 			'           });',
 			'       });',
-			'	</script>',
+			'  </script>',
 			'</body>',
 			'</html>',
 		);
@@ -207,7 +206,7 @@ final class FLW_WC_Payment_Gateway_Sdk {
 	 * @return void The requery transaction.
 	 */
 	public function requery_transaction( string $tx_ref ) {
-		$this->requery_count ++;
+		++$this->requery_count;
 		$this->logger->notice( 'Requerying Transaction....' . $tx_ref );
 
 		if ( isset( $this->event_handler ) ) {
@@ -234,7 +233,6 @@ final class FLW_WC_Payment_Gateway_Sdk {
 			// TODO: handle request errors.
 			$this->logger->notice( 'Transaction Requeried Failed. Awaiting Webhook Verification...' );
 		}
-
 	}
 
 	/**
@@ -258,7 +256,6 @@ final class FLW_WC_Payment_Gateway_Sdk {
 		} else {
 			$this->logger->notice( 'Webhook Verification Failed' );
 		}
-
 	}
 
 	/**

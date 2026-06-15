@@ -26,11 +26,13 @@ require_once __DIR__ . '/class-flw-wc-payment-gateway-event-handler.php';
 require_once __DIR__ . '/client/class-flw-wc-payment-gateway-request.php';
 require_once __DIR__ . '/client/class-flw-wc-payment-gateway-sdk.php';
 require_once __DIR__ . '/util/class-flutterwave-logger.php';
+require_once __DIR__ . '/util/class-flutterwave-signoz-logger.php';
 
 use Flutterwave\WooCommerce\Client\Flw_WC_Payment_Gateway_Request;
 use Flutterwave\WooCommerce\Client\FLW_WC_Payment_Gateway_Sdk as FlwSdk;
 use FLW_WC_Payment_Gateway_Event_Handler as FlwEventHandler;
 use Flutterwave\WooCommerce\Util\Flutterwave_Logger;
+use Flutterwave\WooCommerce\Util\Flutterwave_Signoz_Logger;
 
 /**
  * Main Flutterwave Gateway Class
@@ -97,6 +99,12 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 	 * @var Flutterwave_Logger the logger
 	 */
 	private Flutterwave_Logger $logger;
+	/**
+	 * SigNoz observability logger.
+	 *
+	 * @var Flutterwave_Signoz_Logger
+	 */
+	private Flutterwave_Signoz_Logger $signoz_logger;
 	/**
 	 * Flutterwave Sdk
 	 *
@@ -206,11 +214,12 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			$this->secret_key = $this->live_secret_key;
 		}
 
-		$this->logger = Flutterwave_Logger::instance();
-		$this->sdk    = new FlwSdk( $this->secret_key, self::$log_enabled );
+		$this->logger        = Flutterwave_Logger::instance();
+		$this->signoz_logger = Flutterwave_Signoz_Logger::instance();
+		$this->sdk           = new FlwSdk( $this->secret_key, self::$log_enabled );
 
+		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'send_app_created_event' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
-
 	}
 
 	/**
@@ -220,6 +229,36 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 	 */
 	public function get_secret_key(): string {
 		return $this->secret_key;
+	}
+
+	/**
+	 * Fire the app.created SigNoz event using the freshly-saved settings.
+	 * Hooked into woocommerce_update_options_payment_gateways_{id} so it runs
+	 * after process_admin_options() has persisted the new values to the DB.
+	 *
+	 * @return void
+	 */
+	public function send_app_created_event(): void {
+		$settings = get_option( 'woocommerce_rave_settings', array() );
+
+		if ( isset( $settings['merchant_id'] ) && $settings['app_registered'] ) {
+			return;
+		}
+
+		$go_live    = $settings['go_live'] ?? 'no';
+		$public_key = 'yes' === $go_live
+			? ( $settings['live_public_key'] ?? '' )
+			: ( $settings['test_public_key'] ?? '' );
+
+		if ( empty( $public_key ) ) {
+			return;
+		}
+
+		$this->logger->info( 'Starting Application Integration' );
+		$merchant_info = $this->signoz_logger->init( $public_key );
+		$this->signoz_logger->track_app_created( $public_key, $merchant_info );
+		$this->signoz_logger->mark_app_registered();
+		$this->logger->info( 'Successfully Registered Application Integration' );
 	}
 
 	/**
@@ -368,7 +407,6 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			),
 
 		);
-
 	}
 
 	/**
@@ -403,12 +441,18 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 	 * @return array|void
 	 */
 	public function process_redirect_payments( $order_id ) {
-		include_once dirname( __FILE__ ) . '/client/class-flw-wc-payment-gateway-request.php';
+		include_once __DIR__ . '/client/class-flw-wc-payment-gateway-request.php';
 
 		$order = wc_get_order( $order_id );
 
 		try {
 			$flutterwave_request = ( new FLW_WC_Payment_Gateway_Request() )->get_prepared_payload( $order, $this->get_secret_key() );
+			$this->signoz_logger->track_request_sent(
+				'POST',
+				$flutterwave_request['tx_ref'],
+				'/payments',
+				$this->logger
+			);
 		} catch ( \InvalidArgumentException $flw_e ) {
 			wc_add_notice( $flw_e, 'error' );
 			// redirect user to check out page.
@@ -421,9 +465,11 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 		$flutterwave_request['payment_options'] = $this->payment_options;
 		$custom_nonce                           = wp_create_nonce();
 		$flutterwave_request['redirect_url']    = $flutterwave_request['redirect_url'] . '&_wpnonce=' . $custom_nonce;
-		$sdk                                    = $this->sdk->set_event_handler( new FlwEventHandler( $order ) );
+
+		$sdk = $this->sdk->set_event_handler( new FlwEventHandler( $order ) );
 
 		$response = $sdk->get_client()->request( $this->sdk::$standard_inline_endpoint, 'POST', $flutterwave_request );
+
 		if ( ! is_wp_error( $response ) ) {
 			$response = json_decode( $response['body'] );
 			return array(
@@ -458,7 +504,6 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 				);
 			}
 		}
-
 	}
 
 	/**
@@ -536,6 +581,12 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			$currency      = $order->get_currency();
 			$custom_nonce  = wp_create_nonce();
 			$redirect_url  = '';
+
+			$this->signoz_logger->track_request_sent(
+				'GET',
+				$txnref,
+				'/inline'
+			);
 
 			$flutterwave_woo_url = WC()->api_request_url( 'FLW_WC_Payment_Gateway' );
 
@@ -620,6 +671,12 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 				die();
 			}
 
+			Flutterwave_Signoz_Logger::instance()->track_request_sent(
+				'GET',
+				$txn_ref,
+				'/transactions/verify_by_reference?tx_ref='
+			);
+
 			$sdk->set_event_handler( new FlwEventHandler( $order ) )->requery_transaction( $txn_ref );
 
 			$redirect_url = $this->get_return_url( $order );
@@ -656,6 +713,10 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 
 		if ( $signature !== $local_signature ) {
 			$this->logger->info( 'Faudulent Webhook Notification Attempt [Access Restricted]' );
+			$this->signoz_logger->track_error(
+				'WEBHOOK_SIGNATURE_MISMATCH',
+				'Webhook signature mismatch. Access Denied. Hash does not match.'
+			);
 			wp_send_json(
 				array(
 					'status'  => 'error',
@@ -670,6 +731,10 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 		$event = json_decode( $event );
 
 		if ( empty( $event->event ) && empty( $event->data ) ) {
+			$this->signoz_logger->track_error(
+				'WEBHOOK_BODY_DEFORMED',
+				'Webhook body is malformed. Missing event or data properties.'
+			);
 			wp_send_json(
 				array(
 					'status'  => 'error',
@@ -714,6 +779,10 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			$order    = wc_get_order( $order_id );
 
 			if ( ! $order ) {
+				$this->signoz_logger->track_error(
+					'INVALID_ORDER_REFERENCE_FROM_WEBHOOK',
+					'Webhook sent an invalid order reference. No order found with ID: ' . $order_id
+				);
 				wp_send_json(
 					array(
 						'status'  => 'error',
@@ -750,6 +819,12 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 					WP_Http::CREATED
 				);
 			}
+
+			Flutterwave_Signoz_Logger::instance()->track_request_sent(
+				'GET',
+				$txn_ref,
+				'/transactions/verify_by_reference?tx_ref='
+			);
 
 			$sdk->set_event_handler( new FlwEventHandler( $order ) )->webhook_verify( $event_type, $event_data );
 			wp_send_json(

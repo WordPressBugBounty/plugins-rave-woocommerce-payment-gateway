@@ -2,7 +2,7 @@
 /**
  * The client-specific functionality of the plugin.
  *
- * This class handles all events from the Rave class
+ * This class handles all events from the Flutterwave class
  *
  * @link       https://flutterwave.com
  * @since      2.3.2
@@ -14,10 +14,12 @@
 declare(strict_types=1);
 
 require FLW_WC_DIR_PATH . 'includes/contracts/class-flw-wc-payment-gateway-event-handler-interface.php';
+require_once FLW_WC_DIR_PATH . 'includes/util/class-flutterwave-signoz-logger.php';
 
 use Flutterwave\WooCommerce\Contracts\FLW_WC_Payment_Gateway_Event_Handler_Interface;
+use Flutterwave\WooCommerce\Util\Flutterwave_Signoz_Logger;
 /**
- * This is the class that handles all events from the Rave class
+ * This is the class that handles all events from the Flutterwave class
  * */
 class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Event_Handler_Interface {
 	/**
@@ -89,7 +91,14 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 			} else {
 				$this->order->payment_complete( $this->order->get_id() );
 				$payment_method = $this->order->get_payment_method();
-
+				$this->order->add_order_note(
+					sprintf(
+						/* translators: 1: payment reference 2: transaction reference */
+						__( 'Payment via Flutterwave successful (Payment Reference: %1$s, Transaction Reference: %2$s)', 'rave-woocommerce-payment-gateway' ),
+						$transaction_data->flw_ref,
+						$transaction_data->tx_ref
+					)
+				);
 				$flw_settings = get_option( 'woocommerce_' . $payment_method . '_settings' );
 
 				if ( isset( $flw_settings['autocomplete_order'] ) && 'yes' === $flw_settings['autocomplete_order'] ) {
@@ -101,6 +110,18 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 				$customer_note  = 'Thank you for your order.<br>';
 				$customer_note .= 'Your payment was successful, we are now <strong>processing</strong> your order.';
 				$this->order->add_order_note( $customer_note, 1 );
+
+				$is_production = Flutterwave_Signoz_Logger::instance()->get_current_environment() === 'production';
+
+				if ( $is_production ) {
+					Flutterwave_Signoz_Logger::instance()->track_transaction(
+						$transaction_data->tx_ref,
+						$transaction_data->currency,
+						(float) $transaction_data->amount,
+						$transaction_data->payment_type ?? 'card',
+						(float) $transaction_data->app_fee ?? 0
+					);
+				}
 			}
 			wc_add_notice( $customer_note, 'notice' );
 			// get order_id from the txref.
@@ -124,9 +145,11 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 		$this->order->add_order_note( esc_html__( 'The payment failed on Flutterwave', 'rave-woocommerce-payment-gateway' ) );
 		$customer_note  = 'Your payment <strong>failed</strong>. ';
 		$customer_note .= 'Please, try again or use another Payment Method on the modal.';
-		$reason         = $transaction_data->processor_response ?? ' - ';
+		$reason         = $transaction_data->processor_response ?? $transaction_data->message ?? 'Payment processing failed';
 
 		$this->order->add_order_note( esc_html__( 'Reason for Failure : ', 'rave-woocommerce-payment-gateway' ) . $reason );
+
+		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_FAILED', (string) $reason );
 
 		wc_add_notice( $customer_note, 'notice' );
 	}
@@ -156,9 +179,10 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 		$admin_note     = esc_html__( 'Attention: New order has been placed on hold because we could not confirm the payment. Please, look into it.', 'rave-woocommerce-payment-gateway' ) . '<br>';
 		$admin_note    .= esc_html( 'Payment Responce: ' ) . $requery_response->message;
 
+		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_FAILED', (string) $requery_response->message ?? 'Payment Requery Failed' );
+
 		$this->order->add_order_note( $customer_note, 1 );
 		$this->order->add_order_note( $admin_note );
-
 		wc_add_notice( $customer_note, 'notice' );
 	}
 
@@ -191,12 +215,13 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 		$customer_note  = 'Thank you for your order.<br>';
 		$customer_note .= 'We had an issue confirming your payment, but we have put your order <strong>on-hold</strong>. ';
 		$customer_note .= esc_html__( 'Please, contact us for information regarding this order.', 'woocomerce-rave' );
-		$admin_note     = esc_html__( 'Attention: New order has been placed on hold because we could not get a definite response from the payment gateway. Kindly contact the Rave support team at hi@flutterwave.com to confirm the payment.', 'rave-woocommerce-payment-gateway' ) . ' <br>';
+		$admin_note     = esc_html__( 'Attention: New order has been placed on hold because we could not get a definite response from the payment gateway. Kindly contact the Flutterwave support team at hi@flutterwave.com to confirm the payment.', 'rave-woocommerce-payment-gateway' ) . ' <br>';
 		$admin_note    .= esc_html__( 'Payment Reference: ', 'rave-woocommerce-payment-gateway' ) . $transaction_reference;
+
+		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_CONFIRMATION_TIMEOUT', 'Payment Confirmation timed out' );
 
 		$this->order->add_order_note( $customer_note, 1 );
 		$this->order->add_order_note( $admin_note );
-
 		wc_add_notice( $customer_note, 'notice' );
 	}
 
@@ -211,5 +236,3 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 		// TODO: Save the event data to clients database.
 	}
 }
-
-

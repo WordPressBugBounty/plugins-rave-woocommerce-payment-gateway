@@ -18,42 +18,42 @@ interface FLW_WC_Payment_Gateway_Event_Handler_Interface {
 	 *
 	 * @param object $initialization_data This is the initial transaction data as passed.
 	 * */
-	public function on_init( object $initialization_data);
+	public function on_init( object $initialization_data );
 
 	/**
 	 * This is called only when a transaction is successful
 	 *
 	 * @param object $transaction_data This is the transaction data as returned from the Rave payment. gateway.
 	 * */
-	public function on_successful( object $transaction_data);
+	public function on_successful( object $transaction_data );
 
 	/**
 	 * This is called only when a transaction failed
 	 *
 	 * @param object $transaction_data This is the transaction data as returned from the Rave payment gateway.
 	 * */
-	public function on_failure( object $transaction_data);
+	public function on_failure( object $transaction_data );
 
 	/**
 	 * This is called when a transaction is requeryed from the payment gateway
 	 *
 	 * @param string $transaction_reference This is the transaction reference as returned from the Rave payment gateway.
 	 * */
-	public function on_requery( string $transaction_reference);
+	public function on_requery( string $transaction_reference );
 
 	/**
 	 * This is called a transaction requery returns with an error
 	 *
 	 * @param string $requery_response This is the error response gotten from the Rave payment gateway requery call.
 	 * */
-	public function on_requery_error( $requery_response);
+	public function on_requery_error( $requery_response );
 
 	/**
 	 * This is called when a transaction is canceled by the user
 	 *
 	 * @param string $transaction_reference This is the transaction reference as returned from the Rave payment gateway.
 	 * */
-	public function on_cancel( string $transaction_reference);
+	public function on_cancel( string $transaction_reference );
 
 	/**
 	 * This is called when a transaction doesn't return with a success or a failure response.
@@ -61,7 +61,7 @@ interface FLW_WC_Payment_Gateway_Event_Handler_Interface {
 	 * @param string $transaction_reference This is the transaction reference as returned from the Rave payment gateway.
 	 * @param object $data This is the data returned from the requery call.
 	 * */
-	public function on_timeout( string $transaction_reference, object $data);
+	public function on_timeout( string $transaction_reference, object $data );
 
 	/**
 	 * This is called when a webhook is received

@@ -18,7 +18,7 @@ final class Flutterwave {
 	 *
 	 * @var string
 	 */
-	public string $version = '3.1.0';
+	public string $version = '3.2.0';
 
 	/**
 	 * Plugin API version.
@@ -214,6 +214,5 @@ final class Flutterwave {
 		array_unshift( $links, "<a title='Flutterwave Settings Page' href='$rave_settings_url'>Settings</a>" );
 
 		return $links;
-
 	}
 }

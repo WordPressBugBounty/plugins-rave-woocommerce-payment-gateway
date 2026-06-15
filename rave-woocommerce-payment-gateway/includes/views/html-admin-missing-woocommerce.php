@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 	<p>
 		<?php
 		// Translators: %s Plugin name.
-		echo sprintf( esc_html__( '%s requires WooCommerce to be installed and activated in order to serve updates.', 'rave-woocommerce-payment-gateway' ), '<strong>' . esc_html__( 'Flutterwave WooCommerce', 'rave-woocommerce-payment-gateway' ) . '</strong>' );
+		printf( esc_html__( '%s requires WooCommerce to be installed and activated in order to serve updates.', 'rave-woocommerce-payment-gateway' ), '<strong>' . esc_html__( 'Flutterwave WooCommerce', 'rave-woocommerce-payment-gateway' ) . '</strong>' );
 		?>
 	</p>
 

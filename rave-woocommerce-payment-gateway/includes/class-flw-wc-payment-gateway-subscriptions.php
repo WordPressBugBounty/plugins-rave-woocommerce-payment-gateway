@@ -28,7 +28,7 @@ if ( ! defined( 'FLUTTERWAVEACCESS' ) ) {
 class FLW_WC_Payment_Gateway_Subscriptions extends FLW_WC_Payment_Gateway {
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	public function __construct() {
 
@@ -183,5 +183,3 @@ class FLW_WC_Payment_Gateway_Subscriptions extends FLW_WC_Payment_Gateway {
 		return new WP_Error( 'flutterwave_error', 'This subscription can\'t be renewed automatically. The customer will have to login to his account to renew his subscription' );
 	}
 }
-
-

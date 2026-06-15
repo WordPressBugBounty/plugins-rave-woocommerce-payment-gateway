@@ -3,7 +3,7 @@
  * Plugin Name: Flutterwave WooCommerce
  * Plugin URI: https://developer.flutterwave.com/
  * Description: Official WooCommerce payment gateway for Flutterwave.
- * Version: 3.1.0
+ * Version: 3.2.0
  * Author: Flutterwave Developers
  * Author URI: http://flutterwave.com/us
  * License: MIT License
@@ -62,7 +62,7 @@ add_action( 'woocommerce_blocks_loaded', 'flutterwave_woocommerce_blocks_support
 
 add_action(
 	'before_woocommerce_init',
-	function() {
+	function () {
 		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
 		}
@@ -82,14 +82,6 @@ function flw_plugin_action_links( array $links ): array {
 	array_unshift( $links, "<a title='Flutterwave Settings Page' href='$rave_settings_url'>Settings</a>" );
 
 	return $links;
-
 }
 
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'flw_plugin_action_links' );
-
-
-
-
-
-
-
