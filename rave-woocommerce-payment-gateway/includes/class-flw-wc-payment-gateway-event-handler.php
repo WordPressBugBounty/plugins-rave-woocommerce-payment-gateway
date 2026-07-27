@@ -119,7 +119,7 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 						$transaction_data->currency,
 						(float) $transaction_data->amount,
 						$transaction_data->payment_type ?? 'card',
-						(float) $transaction_data->app_fee ?? 0
+						(float) ( $transaction_data->app_fee ?? 0 )
 					);
 				}
 			}
@@ -149,7 +149,7 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 
 		$this->order->add_order_note( esc_html__( 'Reason for Failure : ', 'rave-woocommerce-payment-gateway' ) . $reason );
 
-		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_FAILED', (string) $reason );
+		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_FAILED', (string) $reason, $transaction_data->tx_ref ?? '' );
 
 		wc_add_notice( $customer_note, 'notice' );
 	}
@@ -179,7 +179,7 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 		$admin_note     = esc_html__( 'Attention: New order has been placed on hold because we could not confirm the payment. Please, look into it.', 'rave-woocommerce-payment-gateway' ) . '<br>';
 		$admin_note    .= esc_html( 'Payment Responce: ' ) . $requery_response->message;
 
-		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_FAILED', (string) $requery_response->message ?? 'Payment Requery Failed' );
+		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_REQUERY_FAILED', (string) ( $requery_response->message ?? 'Payment Requery Failed' ), $transaction_data->tx_ref ?? '' );
 
 		$this->order->add_order_note( $customer_note, 1 );
 		$this->order->add_order_note( $admin_note );
@@ -218,7 +218,7 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 		$admin_note     = esc_html__( 'Attention: New order has been placed on hold because we could not get a definite response from the payment gateway. Kindly contact the Flutterwave support team at hi@flutterwave.com to confirm the payment.', 'rave-woocommerce-payment-gateway' ) . ' <br>';
 		$admin_note    .= esc_html__( 'Payment Reference: ', 'rave-woocommerce-payment-gateway' ) . $transaction_reference;
 
-		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_CONFIRMATION_TIMEOUT', 'Payment Confirmation timed out' );
+		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_CONFIRMATION_TIMEOUT', 'Payment Confirmation timed out', $transaction_reference );
 
 		$this->order->add_order_note( $customer_note, 1 );
 		$this->order->add_order_note( $admin_note );
