@@ -22,6 +22,8 @@ if ( ! defined( 'FLUTTERWAVEACCESS' ) ) {
 	exit;
 }
 
+require_once FLW_WC_DIR_PATH . 'includes/util/class-flutterwave-crypto.php';
+
 /**
  *  Flutterwave Subscription Class.
  */
@@ -99,7 +101,7 @@ class FLW_WC_Payment_Gateway_Subscriptions extends FLW_WC_Payment_Gateway {
 
 		$order_id = $order->get_id();
 		// get token attached for this subscription id.
-		$auth_code = get_post_meta( $order_id, '_rave_wc_token', true );
+		$auth_code = \Flutterwave\WooCommerce\Util\Flutterwave_Crypto::decrypt( (string) $order->get_meta( '_rave_wc_token', true ) );
 		if ( $auth_code ) {
 
 			$headers = array(

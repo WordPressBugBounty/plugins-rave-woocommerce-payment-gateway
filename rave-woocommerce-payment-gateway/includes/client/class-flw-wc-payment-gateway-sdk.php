@@ -213,26 +213,58 @@ final class FLW_WC_Payment_Gateway_Sdk {
 			$this->event_handler->on_requery( $tx_ref );
 		}
 
-		$url = $this->client::API_BASE_URL . '/' . $this->client::API_VERSION . '/transactions/verify_by_reference?tx_ref=' . $tx_ref;
+		$response = $this->verify_by_reference( $tx_ref );
+
+		if ( is_wp_error( $response ) ) {
+			// Could not reach Flutterwave. Leave the order where it is and let the
+			// webhook settle it rather than guessing at an outcome.
+			$this->logger->notice( 'Transaction Requeried Failed. Awaiting Webhook Verification...' );
+			return;
+		}
+
+		if ( ! isset( $this->event_handler ) ) {
+			return;
+		}
+
+		if ( 'success' === ( $response->status ?? '' ) && isset( $response->data ) ) {
+			$this->logger->notice( 'Transaction Requeried Successfully' );
+			$this->event_handler->on_successful( $response->data );
+			return;
+		}
+
+		$this->logger->notice( 'Transaction Requeried Failed' );
+		$this->event_handler->on_failure( $response );
+	}
+
+	/**
+	 * Ask Flutterwave for the current state of a transaction.
+	 *
+	 * @param string $tx_ref The merchant transaction reference.
+	 *
+	 * @return object|\WP_Error The decoded API envelope, or a WP_Error when
+	 *                          Flutterwave could not be reached or understood.
+	 *                          A WP_Error means "unknown", never "not paid".
+	 */
+	private function verify_by_reference( string $tx_ref ) {
+		$url = $this->client::API_BASE_URL . '/' . $this->client::API_VERSION .
+			'/transactions/verify_by_reference?tx_ref=' . rawurlencode( $tx_ref );
 
 		$response = $this->client->request( $url );
 
-		if ( ! is_wp_error( $response ) ) {
-			$response = json_decode( $response['body'] );
-			if ( 'success' === $response->status ) {
-				$this->logger->notice( 'Transaction Requeried Successfully' );
-
-				if ( isset( $this->event_handler ) ) {
-					$this->event_handler->on_successful( $response->data );
-				}
-			} else {
-				$this->logger->notice( 'Transaction Requeried Failed' );
-				$this->event_handler->on_failure( $response );
-			}
-		} else {
-			// TODO: handle request errors.
-			$this->logger->notice( 'Transaction Requeried Failed. Awaiting Webhook Verification...' );
+		if ( is_wp_error( $response ) ) {
+			return $response;
 		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ) );
+
+		if ( ! is_object( $body ) || ! isset( $body->status ) ) {
+			return new \WP_Error(
+				'flutterwave_unreadable_response',
+				'Flutterwave returned a response that could not be read for ' . $tx_ref . '.'
+			);
+		}
+
+		return $body;
 	}
 
 	/**
@@ -266,8 +298,31 @@ final class FLW_WC_Payment_Gateway_Sdk {
 	 * @return void
 	 */
 	public function cancel_payment( string $tx_ref ) {
-		if ( isset( $this->event_handler ) ) {
-			$this->event_handler->on_cancel( $tx_ref );
+		if ( ! isset( $this->event_handler ) ) {
+			return;
 		}
+
+		// A cancellation arrives as a query parameter on a public endpoint, so it
+		// is a claim rather than a fact. Confirm the real state with Flutterwave
+		// before letting it move the order.
+		$response = $this->verify_by_reference( $tx_ref );
+
+		if ( is_wp_error( $response ) ) {
+			$this->logger->notice(
+				'Could not confirm the cancellation of ' . $tx_ref . ' with Flutterwave. Leaving the order unchanged.'
+			);
+			return;
+		}
+
+		if ( 'success' === ( $response->status ?? '' ) && 'successful' === ( $response->data->status ?? '' ) ) {
+			// The customer was charged before or while cancelling. Honour the payment.
+			$this->logger->notice( 'Transaction ' . $tx_ref . ' was reported cancelled but is successful on Flutterwave. Completing the order.' );
+			$this->event_handler->on_successful( $response->data );
+			return;
+		}
+
+		// Flutterwave has no successful transaction under this reference, so the
+		// cancellation is genuine.
+		$this->event_handler->on_cancel( $tx_ref );
 	}
 }

@@ -1,9 +1,9 @@
 === Flutterwave WooCommerce ===
 Contributors: theflutterwave
 Tags: fintech,flutterwave, woocommerce, payments, nigeria, mastercard, visa, target,Naira,payments,verve,donation,church,shop,store, ghana, kenya, international, mastercard, visa
-Requires at least: 3.1
+Requires at least: 5.6
 Tested up to: 7.0.0
-Stable tag: 3.3.0
+Stable tag: 3.3.1
 License: MIT
 License URI: https://github.com/Flutterwave/Woocommerce/blob/master/LICENSE
 
@@ -96,6 +96,16 @@ By contributing to the Flutterwave WooCommerce, you agree that your contribution
 1. You need to open an account on [Flutterwave for Business](https://dashboard.flutterwave.com)
 
 == Changelog ==
+= 3.3.1 =
+* Security: Authenticate the payment callback against the order key; it previously accepted any order ID from an unauthenticated request.
+* Security: Confirm cancellations with Flutterwave before changing an order status.
+* Security: Reject transaction references and webhooks replayed against an order.
+* Security: Use a timing-safe comparison for the webhook signature.
+* Security: Encrypt the stored card token at rest and keep customer PII out of the logs.
+* Security: Orders with no recorded transaction reference only accept a reference issued in that order's name.
+* Fixed: Callback parameters are no longer dropped on stores using plain permalinks.
+* Fixed: Order metadata is written through the CRUD API so it works under HPOS.
+* Fixed: A successful charge that completes after its order was cancelled now reopens the order instead of being rejected, so customers are not left charged with nothing fulfilled.
 = 2.3.6 =
 * Fixed: Dynamic Adjustment to Custom Permalink Set by Merchant.
 * Fixed: Redirect Payment option return a Payment Mismatch Error.

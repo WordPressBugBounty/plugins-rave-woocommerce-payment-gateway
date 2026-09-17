@@ -15,9 +15,11 @@ declare(strict_types=1);
 
 require FLW_WC_DIR_PATH . 'includes/contracts/class-flw-wc-payment-gateway-event-handler-interface.php';
 require_once FLW_WC_DIR_PATH . 'includes/util/class-flutterwave-signoz-logger.php';
+require_once FLW_WC_DIR_PATH . 'includes/util/class-flutterwave-callback.php';
 
 use Flutterwave\WooCommerce\Contracts\FLW_WC_Payment_Gateway_Event_Handler_Interface;
 use Flutterwave\WooCommerce\Util\Flutterwave_Signoz_Logger;
+use Flutterwave\WooCommerce\Util\Flutterwave_Callback;
 /**
  * This is the class that handles all events from the Flutterwave class
  * */
@@ -64,7 +66,8 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 	public function on_init( object $initialization_data ) {
 		// Save the transaction to your DB.
 		$this->order->add_order_note( esc_html__( 'Payment initialized via Flutterwave', 'rave-woocommerce-payment-gateway' ) );
-		update_post_meta( $this->order->get_id(), '_flw_payment_txn_ref', $initialization_data->txref );
+		// CRUD API rather than post meta, so this keeps working under HPOS.
+		Flutterwave_Callback::record_txn_ref( $this->order, (string) $initialization_data->txref );
 		$this->order->add_order_note( esc_html__( 'Your transaction reference: ', 'rave-woocommerce-payment-gateway' ) . $initialization_data->txref );
 	}
 
@@ -123,13 +126,17 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 					);
 				}
 			}
-			wc_add_notice( $customer_note, 'notice' );
-			// get order_id from the txref.
-			$get_order_id = explode( '_', $transaction_data->tx_ref );
-			$order_id     = $get_order_id[1];
-			// save the card token returned here.
-			FLW_WC_Payment_Gateway::save_card_details( $transaction_data, $this->order->get_user_id(), $order_id );
-			WC()->cart->empty_cart();
+			$this->notify_customer( $customer_note );
+
+			// Taken from the order we are already acting on rather than re-parsed
+			// out of the reference, which is not guaranteed to have that shape.
+			FLW_WC_Payment_Gateway::save_card_details( $transaction_data, $this->order->get_user_id(), (string) $this->order->get_id() );
+
+			// The cart only exists on a front-end request; this handler also runs
+			// from the webhook, where WC()->cart is null.
+			if ( function_exists( 'WC' ) && ! is_null( WC()->cart ) ) {
+				WC()->cart->empty_cart();
+			}
 		} else {
 			$this->on_failure( $transaction_data );
 		}
@@ -141,17 +148,26 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 	 * @param object $transaction_data - This is the transaction data as returned from the Flutterwave payment gateway.
 	 */
 	public function on_failure( object $transaction_data ) {
-		$this->order->update_status( 'failed' );
 		$this->order->add_order_note( esc_html__( 'The payment failed on Flutterwave', 'rave-woocommerce-payment-gateway' ) );
+
+		// Never reopen an order that has already been paid for or settled.
+		if ( Flutterwave_Callback::order_awaiting_payment( $this->order ) ) {
+			$this->order->update_status( 'failed' );
+		}
+
 		$customer_note  = 'Your payment <strong>failed</strong>. ';
 		$customer_note .= 'Please, try again or use another Payment Method on the modal.';
 		$reason         = $transaction_data->processor_response ?? $transaction_data->message ?? 'Payment processing failed';
 
 		$this->order->add_order_note( esc_html__( 'Reason for Failure : ', 'rave-woocommerce-payment-gateway' ) . $reason );
 
-		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_FAILED', (string) $reason, $transaction_data->tx_ref ?? '' );
+		// Called both with a transaction object and with the API envelope that
+		// wraps one, so look for the reference in either shape.
+		$reference = (string) ( $transaction_data->tx_ref ?? $transaction_data->data->tx_ref ?? '' );
 
-		wc_add_notice( $customer_note, 'notice' );
+		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_FAILED', (string) $reason, $reference );
+
+		$this->notify_customer( $customer_note );
 	}
 
 	/**
@@ -179,11 +195,11 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 		$admin_note     = esc_html__( 'Attention: New order has been placed on hold because we could not confirm the payment. Please, look into it.', 'rave-woocommerce-payment-gateway' ) . '<br>';
 		$admin_note    .= esc_html( 'Payment Responce: ' ) . $requery_response->message;
 
-		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_REQUERY_FAILED', (string) ( $requery_response->message ?? 'Payment Requery Failed' ), $transaction_data->tx_ref ?? '' );
+		Flutterwave_Signoz_Logger::instance()->track_error( 'PAYMENT_REQUERY_FAILED', (string) ( $requery_response->message ?? 'Payment Requery Failed' ), (string) ( $requery_response->data->tx_ref ?? '' ) );
 
 		$this->order->add_order_note( $customer_note, 1 );
 		$this->order->add_order_note( $admin_note );
-		wc_add_notice( $customer_note, 'notice' );
+		$this->notify_customer( $customer_note );
 	}
 
 	/**
@@ -192,8 +208,19 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 	 * @param string $transaction_reference - This is the transaction reference (txref) of the transaction you want to requery.
 	 * */
 	public function on_cancel( string $transaction_reference ) {
-		// Note: Sometimes a payment can be successful, before a user clicks the cancel button so proceed with caution.
+		// Callers must confirm with Flutterwave that the transaction is not
+		// successful before reaching this point - see
+		// FLW_WC_Payment_Gateway_Sdk::cancel_payment(). The status guard below is
+		// a second line of defence so a cancellation can never unwind a paid order.
 		$this->order->add_order_note( esc_html__( 'The customer clicked on the cancel button on Checkout.', 'rave-woocommerce-payment-gateway' ) );
+
+		if ( ! $this->order->has_status( array( 'pending', 'failed', 'checkout-draft' ) ) ) {
+			$this->order->add_order_note(
+				esc_html__( 'The order was not cancelled because it is no longer awaiting payment.', 'rave-woocommerce-payment-gateway' )
+			);
+			return;
+		}
+
 		$this->order->update_status( 'cancelled' );
 		$admin_note  = esc_html__( 'Attention: Customer clicked on the cancel button on the payment gateway. We have updated the order to cancelled status. ', 'rave-woocommerce-payment-gateway' ) . '<br>';
 		$admin_note .= esc_html__( 'Please, confirm from the order notes that there is no note of a successful transaction. If there is, this means that the user was debited and you either have to give value for the transaction or refund the customer.', 'rave-woocommerce-payment-gateway' );
@@ -222,7 +249,7 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 
 		$this->order->add_order_note( $customer_note, 1 );
 		$this->order->add_order_note( $admin_note );
-		wc_add_notice( $customer_note, 'notice' );
+		$this->notify_customer( $customer_note );
 	}
 
 	/**
@@ -234,5 +261,21 @@ class FLW_WC_Payment_Gateway_Event_Handler implements FLW_WC_Payment_Gateway_Eve
 	public function on_webhook( string $event_type, object $event_data ) {
 		$status = 'pending';
 		// TODO: Save the event data to clients database.
+	}
+
+	/**
+	 * Show a notice to the customer, when there is a customer session to show it in.
+	 *
+	 * These handlers also run from the webhook, where there is no session and
+	 * wc_add_notice() would fail.
+	 *
+	 * @param string $message The notice text.
+	 *
+	 * @return void
+	 */
+	private function notify_customer( string $message ) {
+		if ( function_exists( 'wc_add_notice' ) && function_exists( 'WC' ) && ! is_null( WC()->session ) ) {
+			wc_add_notice( $message, 'notice' );
+		}
 	}
 }

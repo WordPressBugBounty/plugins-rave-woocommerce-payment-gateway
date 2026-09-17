@@ -734,8 +734,8 @@ final class Flutterwave_Signoz_Logger {
 			}
 
 			// 2. Health gate: verify /health/ready (cached for HEALTH_CACHE_TTL).
-			//    When the circuit has just moved out of cooldown, this acts as
-			//    the half-open probe before real traffic resumes.
+			// When the circuit has just moved out of cooldown, this acts as
+			// the half-open probe before real traffic resumes.
 			if ( ! $this->is_service_healthy() ) {
 				$this->record_failure();
 				return null;

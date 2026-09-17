@@ -100,6 +100,9 @@ class FLW_WC_Payment_Gateway_Client {
 		$args = array(
 			'method'  => $method,
 			'headers' => $this->headers,
+			// The WordPress default of 5s is too tight for a payment verification
+			// that a customer is waiting on at the end of checkout.
+			'timeout' => 30,
 		);
 
 		if ( 'GET' !== $method ) {

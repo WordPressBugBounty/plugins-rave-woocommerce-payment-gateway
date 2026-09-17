@@ -34,7 +34,7 @@ require_once __DIR__ . '/class-flutterwave-signoz-logger.php';
 final class Flutterwave_App_Registration {
 
 	const REGISTER_HOOK = 'flw_signoz_register_app';
-	const AS_GROUP       = 'flutterwave-signoz';
+	const AS_GROUP      = 'flutterwave-signoz';
 
 	/**
 	 * Singleton instance.
@@ -132,8 +132,8 @@ final class Flutterwave_App_Registration {
 		$settings = get_option( 'woocommerce_rave_settings', array() );
 
 		$current_version = defined( 'FLW_WC_VERSION' ) ? FLW_WC_VERSION : '';
-		$is_registered    = ! empty( $settings['app_registered'] );
-		$stored_version   = $settings['plugin_version'] ?? '';
+		$is_registered   = ! empty( $settings['app_registered'] );
+		$stored_version  = $settings['plugin_version'] ?? '';
 
 		if ( $is_registered && '' !== $current_version && $stored_version === $current_version ) {
 			return; // Already registered on the version currently running.

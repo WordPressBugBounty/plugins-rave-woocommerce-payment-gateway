@@ -1,4 +1,14 @@
 == Changelog ==
+= 3.3.1 =
+* Security: Authenticate the payment callback against the order key; it previously accepted any order ID from an unauthenticated request.
+* Security: Confirm cancellations with Flutterwave before changing an order status.
+* Security: Reject transaction references and webhooks replayed against an order.
+* Security: Use a timing-safe comparison for the webhook signature.
+* Security: Encrypt the stored card token at rest and keep customer PII out of the logs.
+* Security: Orders with no recorded transaction reference only accept a reference issued in that order's name.
+* Fixed: Callback parameters are no longer dropped on stores using plain permalinks.
+* Fixed: Order metadata is written through the CRUD API so it works under HPOS.
+* Fixed: A successful charge that completes after its order was cancelled now reopens the order instead of being rejected, so customers are not left charged with nothing fulfilled.
 = 3.1.0 =
 * Added: Set Minimum Support to WooCommerce 6.9 or greater.
 * Added: Flutterwave Logger instance using wc_logger.

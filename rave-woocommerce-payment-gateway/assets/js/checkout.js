@@ -12,6 +12,18 @@ jQuery( function ( $ ) {
 			.submit();
 	};
 
+	/**
+	 * Append a query parameter to a URL that may already carry a query string.
+	 *
+	 * The gateway return URL always carries wc-api, order_id and the order key,
+	 * so appending with "?" here would fold those into the previous parameter's
+	 * value and the callback would reject the request.
+	 */
+	const withParam = function (url, key, value) {
+		const separator = url.indexOf('?') === -1 ? '?' : '&';
+		return url + separator + key + '=' + encodeURIComponent(value);
+	};
+
 	const processData = () => {
 		return {
 			public_key: flw_payment_args.public_key,
@@ -24,7 +36,7 @@ jQuery( function ( $ ) {
 				$.unblockUI();
 				if (payment_made) {
 					$.blockUI({message: '<p> confirming transaction ...</p>'});
-					redirectPost(flw_payment_args.redirect_url + "?tx_ref=" + flw_payment_args.tx_ref, {});
+					redirectPost(withParam(flw_payment_args.redirect_url, 'tx_ref', flw_payment_args.tx_ref), {});
 				} else {
 					$.blockUI({message: '<p> Canceling Payment ...</p>'});
 					window.location.href = flw_payment_args.cancel_url;
@@ -35,7 +47,7 @@ jQuery( function ( $ ) {
 				if ( 'successful' === response.status ) {
 					payment_made = true;
 					$.blockUI({message: '<p> confirming transaction ...</p>'});
-					redirectPost(flw_payment_args.redirect_url + "?txref=" + tr, response);
+					redirectPost(withParam(flw_payment_args.redirect_url, 'tx_ref', tr), response);
 				}
 				this.close(); // close modal
 			},

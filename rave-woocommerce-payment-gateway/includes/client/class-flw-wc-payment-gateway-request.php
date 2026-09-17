@@ -15,6 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/../util/class-flutterwave-callback.php';
+
+use Flutterwave\WooCommerce\Util\Flutterwave_Callback;
+
 /**
  * Class FLW_WC_Gateway_Request file.
  *
@@ -105,31 +109,9 @@ final class FLW_WC_Payment_Gateway_Request {
 
 		$checkout_hash = $this->generate_checkout_hash( $data_to_hash );
 
-		// Parse the base URL to check for existing query parameters.
-		$url_parts = wp_parse_url( $this->notify_url );
-
-		// If the base URL already has query parameters, merge them with new ones.
-		if ( isset( $url_parts['query'] ) ) {
-			// Convert the query string to an array.
-			parse_str( $url_parts['query'], $query_array );
-
-			// Add the new parameters to the existing query array.
-			$query_array['order_id'] = $order_id;
-
-			// Rebuild the query string with the new parameters.
-			$new_query_string = http_build_query( $query_array );
-
-			// Rebuild the final URL with the new query string.
-			$callback_url = $url_parts['scheme'] . '://' . $url_parts['host'] . $url_parts['path'] . '?' . $new_query_string;
-		} else {
-			// If no existing query parameters, simply append the new ones.
-			$callback_url = add_query_arg(
-				array(
-					'order_id' => $order_id,
-				),
-				$this->notify_url
-			);
-		}
+		// Carries the order key, which is what authenticates the customer when
+		// Flutterwave sends them back to the callback endpoint.
+		$callback_url = Flutterwave_Callback::build_url( $order );
 
 		return array(
 			'amount'          => $amount,
