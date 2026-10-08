@@ -29,6 +29,7 @@ require_once __DIR__ . '/util/class-flutterwave-logger.php';
 require_once __DIR__ . '/util/class-flutterwave-signoz-logger.php';
 require_once __DIR__ . '/util/class-flutterwave-callback.php';
 require_once __DIR__ . '/util/class-flutterwave-crypto.php';
+require_once __DIR__ . '/admin/class-flutterwave-settings.php';
 
 use Flutterwave\WooCommerce\Client\Flw_WC_Payment_Gateway_Request;
 use Flutterwave\WooCommerce\Client\FLW_WC_Payment_Gateway_Sdk as FlwSdk;
@@ -37,6 +38,7 @@ use Flutterwave\WooCommerce\Util\Flutterwave_Logger;
 use Flutterwave\WooCommerce\Util\Flutterwave_Signoz_Logger;
 use Flutterwave\WooCommerce\Util\Flutterwave_Callback;
 use Flutterwave\WooCommerce\Util\Flutterwave_Crypto;
+use Flutterwave\WooCommerce\Admin\Flutterwave_Settings;
 
 /**
  * Main Flutterwave Gateway Class
@@ -320,8 +322,10 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 			'secret_hash'        => array(
 				'title'       => __( 'Enter Secret Hash', 'rave-woocommerce-payment-gateway' ),
 				'type'        => 'text',
-				'description' => __( 'Please change from default hash and ensure that <b>SECRET HASH</b> is the same with the one on your Flutterwave dashboard', 'rave-woocommerce-payment-gateway' ),
-				'default'     => hash( 'sha256', 'Rave-Secret-Hash' ),
+				'description' => __( 'Ensure that <b>SECRET HASH</b> is the same with the one on your Flutterwave dashboard', 'rave-woocommerce-payment-gateway' ),
+				// No default: each store gets its own generated hash from the
+				// settings screen.
+				'default'     => '',
 			),
 			'title'              => array(
 				'title'       => __( 'Payment method title', 'rave-woocommerce-payment-gateway' ),
@@ -739,11 +743,20 @@ class FLW_WC_Payment_Gateway extends WC_Payment_Gateway {
 
 		$local_signature = (string) $this->get_option( 'secret_hash' );
 
-		if ( '' === $local_signature ) {
-			$this->logger->error( 'A webhook arrived but no secret hash is configured, so it cannot be authenticated. Set one in the Flutterwave settings.' );
+		// A blank hash and the old default are both refused, with the same
+		// response so a caller cannot tell the two apart.
+		if ( ! Flutterwave_Settings::is_usable_secret_hash( $local_signature ) ) {
+			$missing = '' === trim( $local_signature );
+			$this->logger->error(
+				$missing
+					? 'A webhook arrived but no secret hash is configured, so it cannot be authenticated. Set one in the Flutterwave settings.'
+					: 'A webhook was refused because the store still has the old default secret hash. Generate a new one in the Flutterwave settings.'
+			);
 			$this->signoz_logger->track_error(
-				'WEBHOOK_SECRET_HASH_MISSING',
-				'Webhook rejected because the store has no secret hash configured.'
+				$missing ? 'WEBHOOK_SECRET_HASH_MISSING' : 'WEBHOOK_SECRET_HASH_DEFAULT',
+				$missing
+					? 'Webhook rejected because the store has no secret hash configured.'
+					: 'Webhook rejected because the store still uses the old default secret hash.'
 			);
 			wp_send_json(
 				array(

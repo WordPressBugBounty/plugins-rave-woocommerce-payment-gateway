@@ -2,8 +2,8 @@
 Contributors: theflutterwave
 Tags: fintech,flutterwave, woocommerce, payments, nigeria, mastercard, visa, target,Naira,payments,verve,donation,church,shop,store, ghana, kenya, international, mastercard, visa
 Requires at least: 5.6
-Tested up to: 7.0.0
-Stable tag: 3.3.1
+Tested up to: 7.1.2
+Stable tag: 3.3.2
 License: MIT
 License URI: https://github.com/Flutterwave/Woocommerce/blob/master/LICENSE
 
@@ -65,7 +65,7 @@ Handle Webhooks from Flutterwave with two new actions in WooCommerce.
 = Best Practices =
 1. When in doubt about a transaction, always check the Flutterwave Dashboard to confirm the status of a transaction.
 2. Always ensure you keep your API keys securely and privately. Do not share with anyone
-3. Ensure you change from the default secret hash on the Wordpress admin and apply same on the Flutterwave Dashboard
+3. Ensure the secret hash on the API & Webhook tab matches the one on your Flutterwave Dashboard. The plugin generates a random one; use the Generate button to replace it at any time
 4. Always ensure you install the most recent version of the Flutterwave Wordpress plugin
 
 = Debugging Errors =

@@ -3,7 +3,7 @@
  * Plugin Name: Flutterwave WooCommerce
  * Plugin URI: https://developer.flutterwave.com/
  * Description: Official WooCommerce payment gateway for Flutterwave.
- * Version: 3.3.1
+ * Version: 3.3.2
  * Author: Flutterwave Developers
  * Author URI: http://flutterwave.com/us
  * License: MIT License
@@ -78,7 +78,7 @@ add_action(
  */
 function flw_plugin_action_links( array $links ): array {
 
-	$rave_settings_url = esc_url( get_admin_url( null, 'admin.php?page=wc-settings&tab=checkout&section=rave' ) );
+	$rave_settings_url = esc_url( get_admin_url( null, 'admin.php?page=flutterwave-payment' ) );
 	array_unshift( $links, "<a title='Flutterwave Settings Page' href='$rave_settings_url'>Settings</a>" );
 
 	return $links;
@@ -91,8 +91,12 @@ add_action(
 	function () {
 		require_once __DIR__ . '/includes/util/class-flutterwave-signoz-logger.php';
 		require_once __DIR__ . '/includes/util/class-flutterwave-app-registration.php';
+		require_once __DIR__ . '/includes/admin/class-flutterwave-admin-page.php';
+		require_once __DIR__ . '/includes/admin/class-flutterwave-settings-controller.php';
 
 		\Flutterwave\WooCommerce\Util\Flutterwave_Signoz_Logger::register_hooks();
 		\Flutterwave\WooCommerce\Util\Flutterwave_App_Registration::register_hooks();
+		\Flutterwave\WooCommerce\Admin\Flutterwave_Admin_Page::register_hooks();
+		\Flutterwave\WooCommerce\Admin\Flutterwave_Settings_Controller::register_hooks();
 	}
 );
